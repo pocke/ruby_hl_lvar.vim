@@ -4,6 +4,8 @@ execute 'rubyfile '.s:self_path.'.rb'
 
 let s:hl_version = 0
 
+let s:exist_matchaddpos = exists('*matchaddpos')
+
 function! ruby_hl_lvar#redraw() abort
 	let curwinnr=winnr()
 	let prevwinnr=winnr('#')
@@ -31,14 +33,40 @@ function! s:redraw_window()
 		if bv && (wv == bv)
 			return
 		else
-			call s:try_matchdelete(w:ruby_hl_lvar_match_id)
+
+			if s:exist_matchaddpos
+				for id in w:ruby_hl_lvar_match_ids
+					call s:try_matchdelete(id)
+				endfor
+			else
+				call s:try_matchdelete(w:ruby_hl_lvar_match_id)
+			endif
+
 			let w:ruby_hl_lvar_hl_version = 0
 		endif
 	endif
 
 	" Set match if exists
-	if get(b:, 'ruby_hl_lvar_enabled', 1) && get(b:, 'ruby_hl_lvar_match_pattern', '') != ''
-		let w:ruby_hl_lvar_match_id = matchadd(g:ruby_hl_lvar_hl_group, b:ruby_hl_lvar_match_pattern, 0)
+	if get(b:, 'ruby_hl_lvar_enabled', 1)
+
+		if s:exist_matchaddpos
+			if get(b:, 'ruby_hl_lvar_match_poses', []) != []
+			let w:ruby_hl_lvar_match_ids = []
+			let size = len(b:ruby_hl_lvar_match_poses)
+			let i = 0
+			while i < size
+				let poses = b:ruby_hl_lvar_match_poses[i : i + 7]
+				let m = matchaddpos(g:ruby_hl_lvar_hl_group, poses, 0)
+				call add(w:ruby_hl_lvar_match_ids, m)
+				let i += 8
+			endwhile
+			endif
+		else
+			if get(b:, 'ruby_hl_lvar_match_pattern', '') != ''
+				let w:ruby_hl_lvar_match_id = matchadd(g:ruby_hl_lvar_hl_group, b:ruby_hl_lvar_match_pattern, 0)
+			endif
+		endif
+
 		let w:ruby_hl_lvar_hl_version = bv
 	endif
 endfunction
@@ -107,10 +135,18 @@ endfunction
 
 function! ruby_hl_lvar#update_match_pattern(buffer) abort
 	let bufnr = bufnr(a:buffer)
-	let matches = map(ruby_hl_lvar#extract_lvars(a:buffer), '
-		\ ''\%''.v:val[1].''l''.''\%''.v:val[2].''c''.repeat(''.'', strchars(v:val[0]))
+
+	if s:exist_matchaddpos
+		let b:ruby_hl_lvar_match_poses = map(ruby_hl_lvar#extract_lvars(a:buffer), '
+		\   [v:val[1], v:val[2], strlen(v:val[0])]
 		\ ')
-	let b:ruby_hl_lvar_match_pattern = join(matches, '\|')
+	else
+		let matches = map(ruby_hl_lvar#extract_lvars(a:buffer), '
+			\ ''\%''.v:val[1].''l''.''\%''.v:val[2].''c''.repeat(''.'', strchars(v:val[0]))
+			\ ')
+		let b:ruby_hl_lvar_match_pattern = join(matches, '\|')
+	endif
+
 	let s:hl_version += 1
 	let b:ruby_hl_lvar_hl_version = s:hl_version
 endfunction
