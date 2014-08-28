@@ -52,11 +52,14 @@ function! s:redraw_window()
 		if s:exist_matchaddpos
 			if get(b:, 'ruby_hl_lvar_match_poses', []) != []
 			let w:ruby_hl_lvar_match_ids = []
-			" TODO: 8個ずつ指定すべき?
-			for pos in b:ruby_hl_lvar_match_poses
-				let m = matchaddpos(g:ruby_hl_lvar_hl_group, [pos], 0)
+			let size = len(b:ruby_hl_lvar_match_poses)
+			let i = 0
+			while i < size
+				let poses = b:ruby_hl_lvar_match_poses[i : i + 7]
+				let m = matchaddpos(g:ruby_hl_lvar_hl_group, poses, 0)
 				call add(w:ruby_hl_lvar_match_ids, m)
-			endfor
+				let i += 8
+			endwhile
 			endif
 		else
 			if get(b:, 'ruby_hl_lvar_match_pattern', '') != ''
