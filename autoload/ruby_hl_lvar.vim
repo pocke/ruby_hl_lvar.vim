@@ -90,6 +90,9 @@ function! ruby_hl_lvar#disable(force) abort
 	if exists('b:ruby_hl_lvar_match_pattern')
 		unlet b:ruby_hl_lvar_match_pattern
 		unlet b:ruby_hl_lvar_hl_version
+	elseif exists('b:ruby_hl_lvar_match_poses')
+		unlet b:ruby_hl_lvar_match_poses
+		unlet b:ruby_hl_lvar_hl_version
 	endif
 	if a:force
 		let b:ruby_hl_lvar_enabled = 0
