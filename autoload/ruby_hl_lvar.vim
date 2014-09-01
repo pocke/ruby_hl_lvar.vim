@@ -35,9 +35,11 @@ function! s:redraw_window()
 		else
 
 			if s:exist_matchaddpos
+				if exists('w:ruby_hl_lvar_match_ids')
 				for id in w:ruby_hl_lvar_match_ids
 					call s:try_matchdelete(id)
 				endfor
+				endif
 			else
 				call s:try_matchdelete(w:ruby_hl_lvar_match_id)
 			endif
