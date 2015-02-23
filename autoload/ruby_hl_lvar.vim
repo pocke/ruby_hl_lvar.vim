@@ -88,7 +88,6 @@ function! ruby_hl_lvar#extract_lvars(buffer) abort
 endfunction
 
 function! ruby_hl_lvar#disable(force) abort
-	let bufnr = bufnr('%')
 	if exists('b:ruby_hl_lvar_match_pattern')
 		unlet b:ruby_hl_lvar_match_pattern
 		unlet b:ruby_hl_lvar_hl_version
@@ -116,7 +115,6 @@ function! ruby_hl_lvar#enable(force) abort
 	if !a:force && exists('b:ruby_hl_lvar_enabled') && !b:ruby_hl_lvar_enabled
 		return
 	endif
-	let bufnr = bufnr('%')
 	call ruby_hl_lvar#disable(a:force)
 	if !exists('b:ruby_hl_lvar_match_pattern')
 		call ruby_hl_lvar#update_match_pattern('%')
@@ -132,6 +130,15 @@ function! ruby_hl_lvar#refresh(force) abort
 	if !a:force && exists('b:ruby_hl_lvar_enabled') && !b:ruby_hl_lvar_enabled
 		return
 	endif
+
+	" https://github.com/todesking/ruby_hl_lvar.vim/pull/3
+	" Auto refreshing function triggered by TextChanged event is disabling
+	" https://github.com/t9md/vim-textmanip that continuously reselect previous selection.
+	" This code will check if in visual mode, and if so, it won't refresh (redraw) buffer.
+	if mode() =~# "^[vV\<C-v>]"
+		return
+	endif
+
 	if exists('b:ruby_hl_lvar_match_pattern')
 		unlet b:ruby_hl_lvar_match_pattern
 	endif
@@ -139,8 +146,6 @@ function! ruby_hl_lvar#refresh(force) abort
 endfunction
 
 function! ruby_hl_lvar#update_match_pattern(buffer) abort
-	let bufnr = bufnr(a:buffer)
-
 	if s:exist_matchaddpos
 		let b:ruby_hl_lvar_match_poses = map(ruby_hl_lvar#extract_lvars(a:buffer), '
 		\   [v:val[1], v:val[2], strlen(v:val[0])]
